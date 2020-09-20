@@ -52,46 +52,107 @@ void IndexFile::insert(long k, long n)
 		throw WriteError(name);
 }
 
-long IndexFile::search(long key) throw(ReadError)
+long IndexFile::search(long k) throw(ReadError)
 {
 	IndexEntry entry;
 
-	// Length of an index entry.
+	/* Found indx.
+	* Position markers.
+	* Number of file records.
+	* Length of an index entry (in bytes). */
+	long key,
+		mid, begin = 0,
+		end; 
 	int size = entry.recordSize();
 
+	// Resetting file stream mode
+	// Changing position of get ptr
 	index.clear();
-	index.seekg(0, std::ios::end);
-	
-	// Get file length 0, if file is empty
-	long nr = index.tellg(); 
-	if (!index) 
-		throw ReadError(name);
-	
-	// Last entry
-	nr -= size; 
-	bool found = false;
-	
-	// Search for position to insert
-	while (nr && !found)
-	{
-		// Exception Handling
-		if (!entry.read_at(index, nr))
-			throw ReadError(name);
+	index.seekg(0L, std::ios::end);
 
-		// Found
-		if (key == entry.getKey())
-			return key;
+	// Number of records
+	end = index.tellg() / size;
+
+	// File stream failed
+	if (!index)
+		throw ReadError(name);
+
+	// No records to serach
+	if (end == 0)
+		return -1;
+
+	// Position of the last entry
+	end -= 1;
+
+	// Binary search
+	while (begin < end)
+	{
+		mid = (begin + end + 1) / 2;
+
+		// Read current entry
+		entry.read_at(index, mid * size);
+		
+		// Is File stream ok?
+		if (!index)
+			throw ReadError(name);
+	
+		/* Compare two indx
+		* found key and actual one */
+		key = entry.getKey();
+
+		/* Changing position of borders
+		* left or right */
+		if (k < key)
+			end = mid - 1;
 		else
-			nr -= size;
+			begin = mid;
 	}
-	return -1;
+
+	// Reading remaining entry
+	entry.read_at(index, begin * size);
+	
+	// Reading was ok?
+	if (!index)
+		throw ReadError(name);
+
+	// Key found?
+	return ((k == entry.getKey()) ? (begin * size) : -1);
 }
 
 void IndexFile::retrieve(IndexEntry& entry, long pos) throw(ReadError)
 {
-	if (!index.good() || pos == -1)
-		return;
+	// Resetting stream status mode
+	index.clear();
+
+	/* BAD:
+	File stream  
+	either position bad 
+	or reading from file bad */
+	if (!index.good() || pos == -1 
+		|| !entry.read_at(index, pos))
+		throw ReadError(name);
+}
+
+void IndexFile::display() throw(ReadError)
+{
+	long pos = 0L;
+
+	while (!index.eof())
+	{
+		IndexEntry* entry = new IndexEntry();
+		index.seekg(pos);
+
+		if (!index)
+			throw ReadError("IndexFile: Setting the get pointer");
+	
+		std::cout << "\nThe Index: " << pos << "\n";
+		
+		if (!entry->read(index))
+			throw ReadError(name);
+		
+		entry->display();
+		pos += entry->recordSize();
+	}
 
 	index.clear();
-	entry.read_at(index, pos);
 }

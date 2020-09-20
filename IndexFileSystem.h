@@ -10,6 +10,7 @@ private:
 
 public:
 	IndexFileSystem(const std::string);
+
 	void insert(Account& acc);
 	Account* retrieve(long key);
 };

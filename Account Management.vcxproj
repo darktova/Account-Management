@@ -140,7 +140,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AccFile.cpp" />
-    <ClCompile Include="Account Management.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="Account.cpp" />
     <ClCompile Include="DepAcc.cpp" />
     <ClCompile Include="FileError.cpp" />

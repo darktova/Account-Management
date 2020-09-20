@@ -41,32 +41,37 @@ Account* AccFile::retrieve(long pos) throw(ReadError)
         throw ReadError(name);
 
     // Seek to position
-    f.seekg(0L, pos);
+    f.clear();
+    f.seekg(pos);
 
     // f stream ok?
     if (!f.good())
-        return nullptr;
+        throw ReadError(name);
 
     // Getting type id from file
     TypeId id;
     f.read((char*)&id, sizeof(id));
-
-    // Result
-    Account* acc = new Account();
     
-    // Read type id equal to current one
-    if ((id == acc->getTypeId()) 
-        && (f.good()))
+    // Getting suitable type
+    Account* acc = nullptr;
+    switch (id)
     {
-        // Read data from file
-        acc->read(f);
-
-        // Return result
-        return acc;
+    case ACCOUNT:
+        acc = new Account();
+        break;
+    case DEP_ACC:
+        acc = new DepAcc();
+        break;
+    case SAV_ACC:
+        acc = new SavAcc();
+        break;
     }
 
-    // The type id is differ from Account
-    return nullptr;
+    // Exc. handling
+    if (!acc->read(f)) 
+        throw ReadError(name);
+
+    return acc;
 }
 
 void AccFile::display() throw(ReadError)

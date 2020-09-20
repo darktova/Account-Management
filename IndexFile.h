@@ -19,5 +19,6 @@ public:
 	long search(long key) throw(ReadError);
 	void retrieve(IndexEntry& entry, long pos)
 		throw(ReadError);
+	void display() throw(ReadError);
 };
 
